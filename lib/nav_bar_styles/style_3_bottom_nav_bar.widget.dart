@@ -26,41 +26,43 @@ class _BottomNavStyle3 extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Expanded(
-                      child: IconTheme(
-                        data: IconThemeData(
-                            size: item.iconSize,
-                            color: isSelected
-                                ? (item.activeColorSecondary ??
-                                    item.activeColorPrimary)
-                                : item.inactiveColorPrimary ??
-                                    item.activeColorPrimary),
-                        child: isSelected
-                            ? item.icon
-                            : item.inactiveIcon ?? item.icon,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: IconTheme(
+                          data: IconThemeData(
+                              size: item.iconSize,
+                              color: isSelected
+                                  ? (item.activeColorSecondary ??
+                                      item.activeColorPrimary)
+                                  : item.inactiveColorPrimary ??
+                                      item.activeColorPrimary),
+                          child: isSelected
+                              ? item.icon
+                              : item.inactiveIcon ?? item.icon,
+                        ),
                       ),
                     ),
                     if (item.title == null)
                       const SizedBox.shrink()
                     else
                       Padding(
-                        padding: const EdgeInsets.only(top: 15),
+                        padding: const EdgeInsets.only(top: 2),
                         child: Material(
                           type: MaterialType.transparency,
                           child: DefaultTextStyle.merge(
-                            style: TextStyle(
-                                color: item.textStyle != null
-                                    ? item.textStyle!.apply(
-                                            color: isSelected
-                                                ? (item.activeColorSecondary ??
-                                                    item.activeColorPrimary)
-                                                : item.inactiveColorPrimary)
-                                        as Color?
-                                    : isSelected
+                            style: item.textStyle != null
+                                ? item.textStyle!.apply(
+                                    color: isSelected
+                                        ? (item.activeColorSecondary ??
+                                            item.activeColorPrimary)
+                                        : item.inactiveColorPrimary)
+                                : TextStyle(
+                                    color: isSelected
                                         ? (item.activeColorSecondary ??
                                             item.activeColorPrimary)
                                         : item.inactiveColorPrimary,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 12),
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12),
                             child: FittedBox(child: Text(item.title!)),
                           ),
                         ),
@@ -94,14 +96,15 @@ class _BottomNavStyle3 extends StatelessWidget {
                 width: navBarEssentials.selectedIndex == 0
                     ? MediaQuery.of(context).size.width * 0.0
                     : itemWidth * navBarEssentials.selectedIndex,
-                height: 4,
+                height: 2,
               ),
               Flexible(
                 child: AnimatedContainer(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
                   duration: navBarEssentials.itemAnimationProperties.duration,
                   curve: navBarEssentials.itemAnimationProperties.curve,
-                  width: itemWidth,
-                  height: 4,
+                  width: itemWidth - 4,
+                  height: 2,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: selectedItemActiveColor,
