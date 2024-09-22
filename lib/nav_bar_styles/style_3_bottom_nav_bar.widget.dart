@@ -116,7 +116,7 @@ class _BottomNavStyle3 extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 5),
+              padding: EdgeInsets.only(bottom: Platform.isIOS ? 0 : 5),
               child: Row(
                 mainAxisAlignment: navBarEssentials.navBarItemsAlignment,
                 children: navBarEssentials.items.map((final item) {
