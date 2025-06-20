@@ -816,6 +816,7 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
   void jumpToTab(
     final int index, {
     final bool keepCurrentScreenOnTab = true,
+    final bool handleReselection = true,
   }) {
     final int length =
         widget.items.isEmpty ? widget.itemCount : widget.items.length;
@@ -832,7 +833,8 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
       if (keepCurrentScreenOnTab) {
         return;
       }
-      final bool isReselection = index == _controller.index;
+      final bool isReselection =
+          handleReselection || index == _controller.index;
 
       // If reselecting the current tab and handling reselection is enabled
       if (isReselection) {
