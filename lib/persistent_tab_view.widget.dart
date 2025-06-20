@@ -795,31 +795,6 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
     }
   }
 
-  void popAllScreens() {
-    if (widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed !=
-            null &&
-        !Navigator.of(_contextList[_controller.index]!).canPop()) {
-      widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed!();
-    }
-
-    if (widget.popBehaviorOnSelectedNavBarItemPress == PopBehavior.once) {
-      if (Navigator.of(_contextList[_controller.index]!).canPop()) {
-        Navigator.of(_contextList[_controller.index]!).pop(context);
-        return;
-      }
-    } else {
-      Navigator.popUntil(
-          _contextList[_controller.index]!,
-          ModalRoute.withName(widget.isCustomWidget
-              ? (widget.customNavBarScreens[_controller.index]
-                      .routeAndNavigatorSettings?.initialRoute ??
-                  "/9f580fc5-c252-45d0-af25-9429992db112")
-              : widget.items[_controller.index].routeAndNavigatorSettings
-                      ?.initialRoute ??
-                  "/9f580fc5-c252-45d0-af25-9429992db112"));
-    }
-  }
-
   /// Changes the active tab to the specified index
   ///
   /// This method can be called from outside using GlobalKey:
@@ -836,15 +811,15 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
   /// tabViewKey.currentState?.jumpToTab(2); // Switch to the third tab
   ///
   /// // Or to change the tab without handling reselection behavior:
-  /// tabViewKey.currentState?.jumpToTab(2, handleReselection: false);
+  /// tabViewKey.currentState?.jumpToTab(2, keepCurrentScreenOnTab: false);
   /// ```
-  void jumpToTab(final int index, {final bool handleReselection = true}) {
+  void jumpToTab(
+    final int index, {
+    final bool keepCurrentScreenOnTab = true,
+  }) {
     final int length =
         widget.items.isEmpty ? widget.itemCount : widget.items.length;
     if (index >= 0 && index < length) {
-      final bool isReselection =
-          handleReselection || index == _controller.index;
-
       // Update previousIndex if needed
       if (_controller.index != _previousIndex) {
         _previousIndex = _controller.index;
@@ -853,6 +828,11 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
       // Update current index and call callback if provided
       _controller.index = index;
       widget.onItemSelected?.call(index);
+
+      if (keepCurrentScreenOnTab) {
+        return;
+      }
+      final bool isReselection = index == _controller.index;
 
       // If reselecting the current tab and handling reselection is enabled
       if (isReselection) {
@@ -891,6 +871,31 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
 
     // Pop all screens in the current tab
     popAllScreens();
+  }
+
+  void popAllScreens() {
+    if (widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed !=
+            null &&
+        !Navigator.of(_contextList[_controller.index]!).canPop()) {
+      widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed!();
+    }
+
+    if (widget.popBehaviorOnSelectedNavBarItemPress == PopBehavior.once) {
+      if (Navigator.of(_contextList[_controller.index]!).canPop()) {
+        Navigator.of(_contextList[_controller.index]!).pop(context);
+        return;
+      }
+    } else {
+      Navigator.popUntil(
+          _contextList[_controller.index]!,
+          ModalRoute.withName(widget.isCustomWidget
+              ? (widget.customNavBarScreens[_controller.index]
+                      .routeAndNavigatorSettings?.initialRoute ??
+                  "/9f580fc5-c252-45d0-af25-9429992db112")
+              : widget.items[_controller.index].routeAndNavigatorSettings
+                      ?.initialRoute ??
+                  "/9f580fc5-c252-45d0-af25-9429992db112"));
+    }
   }
 }
 
