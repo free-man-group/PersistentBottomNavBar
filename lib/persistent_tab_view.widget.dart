@@ -818,9 +818,7 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
     final bool keepCurrentScreenOnTab = true,
     final bool handleReselection = false,
   }) {
-    final int length =
-        widget.items.isEmpty ? widget.itemCount : widget.items.length;
-    if (index >= 0 && index < length) {
+    if (isValidIndex(index)) {
       // Update previousIndex if needed
       if (_controller.index != _previousIndex) {
         _previousIndex = _controller.index;
@@ -841,6 +839,43 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
         _handleTabReselection(index);
       }
     }
+  }
+
+  void jumpToFirstScreenOfTab(final int index) {
+    if (!isValidIndex(index)) {
+      return;
+    }
+
+    // Update previousIndex if needed
+    if (_controller.index != _previousIndex) {
+      _previousIndex = _controller.index;
+    }
+
+    // Update current index and call callback if provided
+    _controller.index = index;
+    widget.onItemSelected?.call(index);
+
+    // Pop all screens in the current tab
+    popAllScreens();
+
+    // Scroll to top if configured and no screens to pop
+    final bool canPop = Navigator.of(_contextList[index]!).canPop();
+    final bool shouldScrollToTop =
+        widget.items[index].scrollToTopOnNavBarItemPress;
+
+    if (shouldScrollToTop && !canPop) {
+      widget.items[index].scrollController?.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
+    }
+  }
+
+  bool isValidIndex(final int index) {
+    final int length =
+        widget.items.isEmpty ? widget.itemCount : widget.items.length;
+    return index >= 0 && index < length;
   }
 
   /// Gets the current active tab index
