@@ -336,31 +336,39 @@ class PersistentTabViewBase extends StatefulWidget {
   final NavBarPosition navBarPosition;
 
   /// Access the state of PersistentTabView through its key
-  /// 
+  ///
   /// Usage:
   /// ```dart
   /// // Get access to the state using context:
-  /// PersistentTabViewBaseState? tabViewState = PersistentTabViewBase.of(context);
+  /// final tabViewState = PersistentTabViewBase.of(context);
   /// if (tabViewState != null) {
-  ///   tabViewState.popAllScreens();
+  ///   // Navigation between tabs
+  ///   tabViewState.popAllScreens();      // Pop all screens in current tab
+  ///   tabViewState.jumpToTab(2);         // Change to the third tab
+  ///   tabViewState.jumpToTab(2, handleReselection: false); // Change tab without reselection behavior
+  ///
+  ///   // Query information
+  ///   int currentTab = tabViewState.getCurrentTabIndex(); // Get current tab index
   /// }
   /// ```
-  /// 
+  ///
   /// Alternative usage with GlobalKey:
   /// ```dart
-  /// final GlobalKey<PersistentTabViewBaseState> tabViewKey = GlobalKey<PersistentTabViewBaseState>();
-  /// 
+  /// final tabViewKey = GlobalKey<PersistentTabViewBaseState>();
+  ///
   /// PersistentTabView(
   ///   key: tabViewKey,
   ///   context,
   ///   ...
   /// );
-  /// 
-  /// // Later, to pop all screens in the current tab:
-  /// tabViewKey.currentState?.popAllScreens();
+  ///
+  /// // Later, to access methods:
+  /// tabViewKey.currentState?.popAllScreens();      // Pop all screens in current tab
+  /// tabViewKey.currentState?.jumpToTab(2);         // Change to the third tab
+  /// int currentTab = tabViewKey.currentState?.getCurrentTabIndex() ?? 0; // Get current tab index
   /// ```
-  static PersistentTabViewBaseState? of(final BuildContext context) => 
-    context.findAncestorStateOfType<PersistentTabViewBaseState>();
+  static PersistentTabViewBaseState? of(final BuildContext context) =>
+      context.findAncestorStateOfType<PersistentTabViewBaseState>();
 
   @override
   PersistentTabViewBaseState createState() => PersistentTabViewBaseState();
@@ -673,46 +681,21 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
             items: widget.items,
             backgroundColor: widget.backgroundColor,
             navBarHeight: _navBarHeight,
-            onItemSelected: widget.onItemSelected != null
-                ? (final index) {
-                    if (_controller.index != _previousIndex) {
-                      _previousIndex = _controller.index;
-                    }
+            onItemSelected: (final index) {
+              // Update previousIndex if needed
+              if (_controller.index != _previousIndex) {
+                _previousIndex = _controller.index;
+              }
 
-                    _controller.index = index;
-                    widget.onItemSelected?.call(index);
-                    if (_previousIndex == index) {
-                      if (widget.items[_controller.index]
-                              .scrollToTopOnNavBarItemPress &&
-                          !Navigator.of(_contextList[_controller.index]!)
-                              .canPop()) {
-                        widget.items[_controller.index].scrollController
-                            ?.animateTo(0,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.ease);
-                      }
-                      popAllScreens();
-                    }
-                  }
-                : (final index) {
-                    if (_controller.index != _previousIndex) {
-                      _previousIndex = _controller.index;
-                    }
-                    _controller.index = index;
+              // Update current index and call the callback if provided
+              _controller.index = index;
+              widget.onItemSelected?.call(index);
 
-                    if (_previousIndex == index) {
-                      if (widget.items[_controller.index]
-                              .scrollToTopOnNavBarItemPress &&
-                          !Navigator.of(_contextList[_controller.index]!)
-                              .canPop()) {
-                        widget.items[_controller.index].scrollController
-                            ?.animateTo(0,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.ease);
-                      }
-                      popAllScreens();
-                    }
-                  },
+              // If the selected tab is already active (pressing the current tab again)
+              if (_previousIndex == index) {
+                _handleTabReselection(index);
+              }
+            },
           ),
           navBarHideAnimationController: _navBarHideAnimationController,
           isCustomWidget: widget.isCustomWidget,
@@ -812,21 +795,6 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
     }
   }
 
-  /// Pops all screens in the current active tab
-  /// 
-  /// This method can be called from outside using GlobalKey:
-  /// ```dart
-  /// final GlobalKey<PersistentTabViewBaseState> tabViewKey = GlobalKey<PersistentTabViewBaseState>();
-  /// 
-  /// PersistentTabView(
-  ///   key: tabViewKey,
-  ///   context,
-  ///   ...
-  /// );
-  /// 
-  /// // Later, to pop all screens in the current tab:
-  /// tabViewKey.currentState?.popAllScreens();
-  /// ```
   void popAllScreens() {
     if (widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed !=
             null &&
@@ -850,6 +818,79 @@ class PersistentTabViewBaseState extends State<PersistentTabView>
                       ?.initialRoute ??
                   "/9f580fc5-c252-45d0-af25-9429992db112"));
     }
+  }
+
+  /// Changes the active tab to the specified index
+  ///
+  /// This method can be called from outside using GlobalKey:
+  /// ```dart
+  /// final tabViewKey = GlobalKey<PersistentTabViewBaseState>();
+  ///
+  /// PersistentTabView(
+  ///   key: tabViewKey,
+  ///   context,
+  ///   ...
+  /// );
+  ///
+  /// // Later, to change the tab:
+  /// tabViewKey.currentState?.jumpToTab(2); // Switch to the third tab
+  ///
+  /// // Or to change the tab without handling reselection behavior:
+  /// tabViewKey.currentState?.jumpToTab(2, handleReselection: false);
+  /// ```
+  void jumpToTab(final int index, {final bool handleReselection = true}) {
+    final int length =
+        widget.items.isEmpty ? widget.itemCount : widget.items.length;
+    if (index >= 0 && index < length) {
+      final bool isReselection =
+          handleReselection || index == _controller.index;
+
+      // Update previousIndex if needed
+      if (_controller.index != _previousIndex) {
+        _previousIndex = _controller.index;
+      }
+
+      // Update current index and call callback if provided
+      _controller.index = index;
+      widget.onItemSelected?.call(index);
+
+      // If reselecting the current tab and handling reselection is enabled
+      if (isReselection) {
+        _handleTabReselection(index);
+      }
+    }
+  }
+
+  /// Gets the current active tab index
+  ///
+  /// This method can be called from outside using GlobalKey:
+  /// ```dart
+  /// final tabViewKey = GlobalKey<PersistentTabViewBaseState>();
+  ///
+  /// // Later, to get the current tab index:
+  /// int currentIndex = tabViewKey.currentState?.getCurrentTabIndex() ?? 0;
+  /// ```
+  int getCurrentTabIndex() => _controller.index;
+
+  /// Handles reselection of the current active tab
+  ///
+  /// This method is called when the user taps on the already active tab
+  void _handleTabReselection(final int index) {
+    // Scroll to top if configured and no screens to pop
+    final bool canPop = Navigator.of(_contextList[index]!).canPop();
+    final bool shouldScrollToTop =
+        widget.items[index].scrollToTopOnNavBarItemPress;
+
+    if (shouldScrollToTop && !canPop) {
+      widget.items[index].scrollController?.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
+    }
+
+    // Pop all screens in the current tab
+    popAllScreens();
   }
 }
 
