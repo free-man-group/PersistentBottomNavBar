@@ -335,11 +335,38 @@ class PersistentTabViewBase extends StatefulWidget {
 
   final NavBarPosition navBarPosition;
 
+  /// Access the state of PersistentTabView through its key
+  /// 
+  /// Usage:
+  /// ```dart
+  /// // Get access to the state using context:
+  /// PersistentTabViewBaseState? tabViewState = PersistentTabViewBase.of(context);
+  /// if (tabViewState != null) {
+  ///   tabViewState.popAllScreens();
+  /// }
+  /// ```
+  /// 
+  /// Alternative usage with GlobalKey:
+  /// ```dart
+  /// final GlobalKey<PersistentTabViewBaseState> tabViewKey = GlobalKey<PersistentTabViewBaseState>();
+  /// 
+  /// PersistentTabView(
+  ///   key: tabViewKey,
+  ///   context,
+  ///   ...
+  /// );
+  /// 
+  /// // Later, to pop all screens in the current tab:
+  /// tabViewKey.currentState?.popAllScreens();
+  /// ```
+  static PersistentTabViewBaseState? of(final BuildContext context) => 
+    context.findAncestorStateOfType<PersistentTabViewBaseState>();
+
   @override
-  _PersistentTabViewState createState() => _PersistentTabViewState();
+  PersistentTabViewBaseState createState() => PersistentTabViewBaseState();
 }
 
-class _PersistentTabViewState extends State<PersistentTabView>
+class PersistentTabViewBaseState extends State<PersistentTabView>
     with SingleTickerProviderStateMixin {
   late List<BuildContext?> _contextList;
   late PersistentTabController _controller;
@@ -785,6 +812,21 @@ class _PersistentTabViewState extends State<PersistentTabView>
     }
   }
 
+  /// Pops all screens in the current active tab
+  /// 
+  /// This method can be called from outside using GlobalKey:
+  /// ```dart
+  /// final GlobalKey<PersistentTabViewBaseState> tabViewKey = GlobalKey<PersistentTabViewBaseState>();
+  /// 
+  /// PersistentTabView(
+  ///   key: tabViewKey,
+  ///   context,
+  ///   ...
+  /// );
+  /// 
+  /// // Later, to pop all screens in the current tab:
+  /// tabViewKey.currentState?.popAllScreens();
+  /// ```
   void popAllScreens() {
     if (widget.items[_controller.index].onSelectedTabPressWhenNoScreensPushed !=
             null &&
